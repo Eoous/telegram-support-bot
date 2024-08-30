@@ -126,8 +126,7 @@ function chat(ctx: Context) {
             cache.config.language.from +
             ' ' +
             '(.*)' +
-            ' ' +
-            cache.config.language.language,
+            '\n\n'
           ),
         );
         // replying to closed ticket
