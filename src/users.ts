@@ -92,15 +92,15 @@ function chat(ctx: Context, chat: { id: string }) {
       ctx.session.groupCategory,
       function (ticket: { id: string }) {
         if (!isAutoReply && cache.config.autoreply_confirmation) {
-          middleware.msg(
-            chat.id,
-            cache.config.language.confirmationMessage + '\n' +
-            (cache.config.show_user_ticket ?
-              cache.config.language.ticket +
-              ' #T' +
-              ticket.id.toString().padStart(6, '0') :
-              ''),
-          );
+          // middleware.msg(
+          //   chat.id,
+          //   cache.config.language.confirmationMessage + '\n' +
+          //   (cache.config.show_user_ticket ?
+          //     cache.config.language.ticket +
+          //     ' #T' +
+          //     ticket.id.toString().padStart(6, '0') :
+          //     ''),
+          // );
         }
 
         // To staff
@@ -258,15 +258,15 @@ function chatInGroup(ctx: Context, chat: { id: string }) {
       ctx.session.groupCategory,
       function (ticket: { id: string }) {
         if (!isAutoReply && cache.config.autoreply_confirmation) {
-          middleware.msg(
-            chat.id,
-            cache.config.language.confirmationMessage + '\n' +
-            (cache.config.show_user_ticket ?
-              cache.config.language.ticket +
-              ' #T' +
-              ticket.id.toString().padStart(6, '0') :
-              ''),
-          );
+          // middleware.msg(
+          //   chat.id,
+          //   cache.config.language.confirmationMessage + '\n' +
+          //   (cache.config.show_user_ticket ?
+          //     cache.config.language.ticket +
+          //     ' #T' +
+          //     ticket.id.toString().padStart(6, '0') :
+          //     ''),
+          // );
         }
 
         // To staff

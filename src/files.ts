@@ -222,7 +222,7 @@ function fileHandler(type: string, bot: TelegramAddon, ctx: Context) {
           let message =
           cache.config.language.confirmationMessage +
           (cache.config.show_user_ticket ?
-            cache.config.language.yourTicketId +
+            cache.config.language.ticket +
             ' #T' +
             ticket.id.toString().padStart(6, '0'):
             '');
@@ -242,7 +242,7 @@ function fileHandler(type: string, bot: TelegramAddon, ctx: Context) {
             }
             message = `${cache.config.language.file_sent} ${name[1]}`;
           }
-          middleware.msg(ctx.chat.id, message);
+          //middleware.msg(ctx.chat.id, message);
         },
     );
   });
@@ -321,19 +321,20 @@ function fowardHandler(
   ctx.getChat().then(function(chat: { type: string }) {
     if (chat.type === 'private') {
       cache.ticketID = ctx.message.from.id;
-      userInfo =
-        `${cache.config.language.from} ${ctx.message.from.first_name} ` +
-        `${cache.config.language.language}: ` +
-        `${ctx.message.from.language_code}\n\n`;
-
+      userInfo = `${cache.config.language.from} ${ctx.message.from.first_name}\n\n`
       if (ctx.session.group === undefined) {
-        userInfo =
-          `${cache.config.language.from} ${ctx.message.from.first_name} ` +
-          `${cache.config.language.language}: ` +
-          `${ctx.message.from.language_code}\n\n`;
+        userInfo = `${cache.config.language.from} ${ctx.message.from.first_name}\n\n`
       }
       callback(userInfo);
-    } else {
+    } else if ((ctx.chat.type === 'group' || ctx.chat.type === 'supergroup') &&
+        ctx.chat.id as unknown as number !== cache.config.staffchat_id as number) {
+      cache.ticketID = ctx.message.chat.id;
+      userInfo = `${cache.config.language.from} ${ctx.message.from.first_name} in ${(ctx.message.chat as any).title}\n\n`
+      if (ctx.session.group === undefined) {
+        userInfo = `${cache.config.language.from} ${ctx.message.from.first_name} in ${(ctx.message.chat as any).title}\n\n`
+      }
+      callback(userInfo);
+  } else {
       callback(undefined);
     }
   });

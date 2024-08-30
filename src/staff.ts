@@ -76,7 +76,7 @@ function privateReply(ctx: Context, msg: any = {}) {
     },
   );
   // Confirmation message
-  middleware.msg(ctx.chat.id, cache.config.language.msg_sent, {});
+  //middleware.msg(ctx.chat.id, cache.config.language.msg_sent, {});
 }
 
 /**
@@ -126,7 +126,7 @@ function chat(ctx: Context) {
             cache.config.language.from +
             ' ' +
             '(.*)' +
-            '\n\n'
+            '[\n\n]?'
           ),
         );
         // replying to closed ticket
@@ -169,12 +169,12 @@ function chat(ctx: Context) {
         }
         const esc: any = middleware.strictEscape;
         // To staff msg sent
-        middleware.msg(
-          ctx.chat.id,
-          `${cache.config.language.msg_sent} ${esc(name[1])}`,
-          // eslint-disable-next-line new-cap
-          { parse_mode: cache.config.parse_mode }, /* .notifications(false) */
-        );
+        // middleware.msg(
+        //   ctx.chat.id,
+        //   `${cache.config.language.msg_sent} ${esc(name[1])}`,
+        //   // eslint-disable-next-line new-cap
+        //   { parse_mode: cache.config.parse_mode }, /* .notifications(false) */
+        // );
         console.log(`Answer: ` + ticketMsg(name[1], ctx.message));
         cache.ticketSent[userid[1]] = null;
         // Check if auto close ticket
