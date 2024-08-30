@@ -130,20 +130,18 @@ function main(bot: TelegramAddon = defaultBot, logs = true) {
 
   if (cache.config.pass_start == false) {
     bot.command('start', (ctx: Context) => {
-      if (ctx.chat.type == 'private') {
-        middleware.reply(ctx, cache.config.language.startCommandText);
-        if (cache.config.categories && cache.config.categories.length > 0) {
-          setTimeout(
-            () =>
-              middleware.reply(
-                ctx,
-                cache.config.language.services,
-                inline.replyKeyboard(keys),
-              ),
-            500,
-          );
-        }
-      } else middleware.reply(ctx, cache.config.language.prvChatOnly);
+      middleware.reply(ctx, cache.config.language.startCommandText);
+      if (cache.config.categories && cache.config.categories.length > 0) {
+        setTimeout(
+          () =>
+            middleware.reply(
+              ctx,
+              cache.config.language.services,
+              inline.replyKeyboard(keys),
+            ),
+          500,
+        );
+      }
     });
   }
 

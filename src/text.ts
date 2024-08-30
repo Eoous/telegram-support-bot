@@ -51,6 +51,18 @@ function ticketHandler(bot: TelegramAddon, ctx: Context) {
           users.chat(ctx, ctx.message.chat);
         },
     );
+  } else if ((ctx.chat.type === 'group' || ctx.chat.type === 'supergroup') &&
+    ctx.chat.id as unknown as number !== cache.config.staffchat_id as number) {
+    db.getOpen(
+        ctx.chat.id,
+        ctx.session.groupCategory,
+        function(ticket: any) {
+          if (ticket == undefined) {
+            db.add(ctx.message.chat.id, 'open', ctx.session.groupCategory);
+          }
+          users.chatInGroup(ctx, ctx.message.chat);
+        },
+    );
   } else {
     staff.chat(ctx);
   }

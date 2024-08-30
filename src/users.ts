@@ -29,8 +29,7 @@ function ticketMsg(
     `${cache.config.language.ticket} ` +
     `#T${ticket.toString().padStart(6, '0')} ${cache.config.language.from} ` +
     `[${esc(message.from.first_name)}](${link})` +
-    ` ${cache.config.language.language}: ` +
-    `${message.from.language_code} ${tag}\n\n` +
+    `\n\n` +
     `${esc(message.text)}\n\n` +
     (autoReplyInfo ? `_${autoReplyInfo}_` : '')
   );
@@ -227,4 +226,170 @@ function chat(ctx: Context, chat: { id: string }) {
   );
 }
 
-export { chat };
+/**
+ * Ticket handling and spam protection.
+ * @param {context} ctx Bot context.
+ * @param {chat} chat Bot chat.
+ */
+function chatInGroup(ctx: Context, chat: { id: string }) {
+  cache.ticketID = ctx.message.chat.id;
+  // Check if auto reply works
+  let isAutoReply = false;
+  if (autoReply(ctx)) {
+    isAutoReply = true;
+    if (!cache.config.show_auto_replied) {
+      return;
+    }
+  }
+  const autoReplyInfo = isAutoReply ?
+    cache.config.language.automatedReplySent :
+    undefined;
+
+  if (cache.ticketIDs[cache.ticketID] === undefined) {
+    cache.ticketIDs.push(cache.ticketID);
+  }
+  cache.ticketStatus[cache.ticketID] = true;
+
+  ctx.message.from.first_name = `${ctx.message.from.first_name} in ${(ctx.message.chat as any).title}`;
+  if (cache.ticketSent[cache.ticketID] === undefined) {
+    // Get Ticket ID from DB
+    db.getOpen(
+      chat.id,
+      ctx.session.groupCategory,
+      function (ticket: { id: string }) {
+        if (!isAutoReply && cache.config.autoreply_confirmation) {
+          middleware.msg(
+            chat.id,
+            cache.config.language.confirmationMessage + '\n' +
+            (cache.config.show_user_ticket ?
+              cache.config.language.ticket +
+              ' #T' +
+              ticket.id.toString().padStart(6, '0') :
+              ''),
+          );
+        }
+
+        // To staff
+        middleware.msg(
+          cache.config.staffchat_id,
+          ticketMsg(
+            ticket.id,
+            ctx.message,
+            ctx.session.groupTag,
+            cache.config.anonymous_tickets,
+            autoReplyInfo,
+          ),
+          { parse_mode: cache.config.parse_mode },
+        );
+
+        // Check if group flag is set and is not admin chat
+        if (
+          ctx.session.group !== '' &&
+          ctx.session.group != cache.config.staffchat_id
+        ) {
+          // Send to group-staff chat
+          middleware.msg(
+            ctx.session.group,
+            ticketMsg(
+              ticket.id,
+              ctx.message,
+              ctx.session.groupTag,
+              cache.config.anonymous_tickets,
+              autoReplyInfo,
+            ),
+            cache.config.allow_private ?
+              {
+                parse_mode: cache.config.parse_mode,
+                reply_markup: {
+                  html: '',
+                  inline_keyboard: [
+                    [
+                      {
+                        text: cache.config.language.replyPrivate,
+                        callback_data:
+                          ctx.from.id +
+                          '---' +
+                          ctx.message.from.first_name +
+                          '---' +
+                          ctx.session.groupCategory +
+                          '---' +
+                          ticket.id,
+                      },
+                    ],
+                  ],
+                },
+              } :
+              {
+                parse_mode: cache.config.parse_mode
+              },
+          );
+        }
+      },
+    );
+    // wait 5 minutes before this message appears again and do not
+    // send notification sounds in that time to avoid spam
+    setTimeout(function () {
+      cache.ticketSent[cache.ticketID] = undefined;
+    }, cache.config.spam_time);
+    cache.ticketSent[cache.ticketID] = 0;
+  } else if (cache.ticketSent[cache.ticketID] < cache.config.spam_cant_msg) {
+    cache.ticketSent[cache.ticketID]++;
+    db.getOpen(
+      cache.ticketID,
+      ctx.session.groupCategory,
+      function (ticket: { id: { toString: () => string } }) {
+        middleware.msg(
+          cache.config.staffchat_id,
+          ticketMsg(
+            ticket.id,
+            ctx.message,
+            ctx.session.groupTag,
+            cache.config.anonymous_tickets,
+            autoReplyInfo,
+          ),
+          { parse_mode: cache.config.parse_mode },
+        );
+        if (
+          ctx.session.group !== '' &&
+          ctx.session.group != cache.config.staffchat_id
+        ) {
+          middleware.msg(
+            ctx.session.group,
+            ticketMsg(
+              ticket.id,
+              ctx.message,
+              ctx.session.groupTag,
+              cache.config.anonymous_tickets,
+              autoReplyInfo,
+            ),
+            { parse_mode: cache.config.parse_mode },
+          );
+        }
+      },
+    );
+  } else if (cache.ticketSent[cache.ticketID] === cache.config.spam_cant_msg) {
+    cache.ticketSent[cache.ticketID]++;
+    // eslint-disable-next-line new-cap
+
+    middleware.msg(chat.id, cache.config.language.blockedSpam, {
+      parse_mode: cache.config.parse_mode,
+    });
+  }
+  db.getOpen(
+    cache.ticketID,
+    ctx.session.groupCategory,
+    function (ticket: { id: { toString: () => string } }) {
+      console.log(
+        ticketMsg(
+          ticket.id,
+          ctx.message,
+          ctx.session.groupTag,
+          cache.config.anonymous_tickets,
+          autoReplyInfo,
+        ),
+      );
+    },
+  );
+}
+
+export {chat, chatInGroup};
